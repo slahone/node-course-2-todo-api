@@ -48,4 +48,23 @@ describe('POST /todos', () => {
         }).catch((e) => done (e));
       })
   });
+
+  it('should not create a new todo if invalid body supplied', (done) => {
+    const text = '';
+    request(app)                            // run app to listen on port 3000
+      .post('/todos')                       // create a post request
+      .send({})                             // in the post request, send object {text} above as body
+      .expect(400)                          // should return status 400 this test since there is no body
+      .end((err, res) => {
+        if (err) {
+          return done(err);
+        }
+        Todo.find().then((todos) => {       // check that a new record was not created in the db.
+          expect (todos.length).toBe(0);    // length should be 0
+          done();
+        }).catch((e) => done(e));
+      })
+    })
+
+
 });
