@@ -4,14 +4,20 @@ const request = require ('supertest');
 const {app} = require ('./../server');
 const {Todo} = require ('./../models/todo');
 
+const todos = [{
+  text: 'First test todo'
+}, {
+  text: 'Second test todo'
+}];
+
 //************************************************************
 // This will ensure the Todos collection is cleared out before
-// each test run.  Ensures that the test, if run successfyully,
-// will result in one and only one record in the todos
-// collection in the MongoDB database
+// each test run. After  that, insert a known set of records.
 //*************************************************************
 beforeEach((done) => {
-  Todo.remove({}).then(() => done());
+  Todo.remove({}).then(() => {
+    Todo.insertMany(todos);
+  }).then(() => done());
 });
 
 describe('POST /todos', () => {
@@ -37,11 +43,12 @@ describe('POST /todos', () => {
           return done(err);
         }
         // After the test is run, we check the database for correct results
-        // First find all records in the collection, there should be only one.
-        // Then check the text field in that record, should be text as above.
+        // First find all records in the collection that match the text specified,
+        // there should be only one matching record returned from find.
+        // Then check the text field in the first record, should be text as above.
         // if everything checks out, test was successful, call sone. If not,
         // error will be caught in catch section. call done with error parm.
-        Todo.find().then((todos) => {
+        Todo.find({text}).then((todos) => {
           expect(todos.length).toBe(1);
           expect(todos[0].text).toBe(text);
           done();
@@ -60,11 +67,23 @@ describe('POST /todos', () => {
           return done(err);
         }
         Todo.find().then((todos) => {       // check that a new record was not created in the db.
-          expect (todos.length).toBe(0);    // length should be 0
+          expect (todos.length).toBe(2);    // length should be 2
           done();
         }).catch((e) => done(e));
       })
     })
+});
 
-
+// testing get route.  There is no reason to test the results for errors here
+// so we do not need the end(err, res) statement.  A simple end (done) does it.
+describe('GET /todos', () => {
+  it('should get all todos', (done) => {
+    request(app)
+      .get('/todos')
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.todos.length).toBe(2);
+      })
+      .end(done);
+    })
 });
