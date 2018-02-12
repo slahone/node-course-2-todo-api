@@ -33,6 +33,15 @@ app.get('/todos', (req, res) => {
     });
 })
 
+//*****************************************************************
+// GET /todos/:id
+//
+// In this route, first we check for validity of the ID.  If invalid,
+// we can immediately terminate the all and return a 404 status code.
+// Next we use Todo.findById to search for a matching record.  If not
+// found, return 404 status code.  If found, return the document.
+// Lastly, we have a catch block to catch any errors that may occur.
+//*******************************************************************
 app.get('/todos/:id', (req, res) => {
   var id = req.params.id;
   if (!ObjectID.isValid(id)) {
