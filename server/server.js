@@ -24,12 +24,6 @@ app.post('/todos', (req, res) => {
   })
 })
 
-app.get('/', (req, res) => {
-  res.send ({
-    result: "Have a nice day!"
-  }).catch (e) => res.send("Error on root");
-}
-
 app.get('/todos', (req, res) => {
     Todo.find().then ((todos) => {
       if (todos.length==0) {
@@ -108,6 +102,11 @@ app.get('/users/:id', (req, res) => {
     }, (e) => {
       res.status(404).send (e);
     }).catch((e) => res.status(400).send());
+})
+
+app.get('/*', (req, res) => {
+  res.send ({resp: "Have a nice day!"})
+  //  .catch((e) => console.log (e));
 })
 
 app.listen (port, () => {
