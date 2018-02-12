@@ -6,8 +6,8 @@ MongoClient.connect('mongodb://localhost:27017/TodoApp', (err, conn) => {
     }
     console.log ('Connected to MongoDB server');
 
-    const db = conn.db('test');
-    db.collection('Todos').find({$text: {$search:"4"}}).toArray().then((docs) => {
+    const db = conn.db('ToDoApp');
+    db.collection('todos').find({$text: {$search:"4"}}).toArray().then((docs) => {
         //console.log (`ToDo-s count: ${docs.count()}`);
         console.log (JSON.stringify (docs, undefined, 2));
     }, (err) => {
