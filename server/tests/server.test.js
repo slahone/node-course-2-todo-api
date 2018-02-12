@@ -4,6 +4,7 @@ const {ObjectID} = require('mongodb');
 
 const {app} = require ('./../server');
 const {Todo} = require ('./../models/todo');
+const {User} = require ('./../models/user');
 
 const todos = [{
   _id: new ObjectID(),
@@ -11,6 +12,14 @@ const todos = [{
 }, {
   _id: new ObjectID(),
   text: 'Second test todo'
+}];
+
+const users = [{
+  _id: new ObjectID(),
+  email: 'FirstUserEmail@someserver.com'
+}, {
+  _id: new ObjectID(),
+  email: 'SecondUserEmail@someserver.com'
 }];
 
 //************************************************************
@@ -21,7 +30,13 @@ beforeEach((done) => {
   Todo.remove({}).then(() => {
     Todo.insertMany(todos);
   }).then(() => done());
-});
+})
+
+// beforeEach((done) => {
+//   User.remove({}).then(() => {
+//     User.insertMany(users);
+//   }).then(() => done());
+// })
 
 describe('POST /todos', () => {
   it('should create a new todo', (done) => {
@@ -115,4 +130,40 @@ describe('GET /todos/:id', () => {
     .end(done);
   })
 
+})
+
+// testing a delete operation. We create the test entries earlier
+// So now we can use the ID from those to delete one of them.
+describe('DELETE /todos/:id', () => {
+  it ('should remove a todo doc', (done) => {
+    const hexID = todos[0]._id.toHexString();
+    request(app)
+    .delete(`/todos/${hexID}`)
+    .expect(200)
+    .expect((res) => {
+      expect(res.body.todo._id).toBe(hexID) // MUST be a string
+    })
+    .end((err, res) => {
+      if (err) {          // we check the results of the delete op here
+        return done (err);
+      }
+      Todo.findById(hexID).then((todo) => { // check that the databse does not have the id any more.
+        expect(todo).toNotExist();          // if deleted successfully, todo should be null.
+        done();
+      }).catch((e) => done(e));
+    })
+  })
+  it ('should return 404 for unavailable ids', (done) => {
+    const hexId = new ObjectID().toHexString();
+    request(app)
+    .get(`/todos/${hexId}`)
+    .expect(404)
+    .end(done);
+  })
+  it ('should return 404 for non-object ids', (done) => {
+    request(app)
+    .get(`/todos/123456`)
+    .expect(404)
+    .end(done);
+  })
 })

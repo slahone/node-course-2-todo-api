@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const express = require ('express');
 const bodyParser = require ('body-parser');
 const {ObjectID} = require ('mongodb');
@@ -18,6 +19,17 @@ app.post('/todos', (req, res) => {
     completedAt: req.body.completedAt
   })
   todo.save().then((doc) => {
+    res.send(doc);
+  }, (e) => {
+    res.status(400).send(e);
+  })
+})
+
+app.post('/users', (req, res) => {
+  const user = new User ({
+    email: req.body.email,
+  })
+  user.save().then((doc) => {
     res.send(doc);
   }, (e) => {
     res.status(400).send(e);
@@ -104,9 +116,79 @@ app.get('/users/:id', (req, res) => {
     }).catch((e) => res.status(400).send());
 })
 
+app.delete('/todos/:id', (req, res) => {
+  var id = req.params.id;
+  if (!ObjectID.isValid(id)) {
+    return res.status(404).send('Id format is invalid');
+  }
+  Todo.findByIdAndRemove(id).then((todo)  => {
+      if (!todo) {
+        res.status(404).send('Todo Record not found');
+      } else {
+          res.send ({
+            status: "Deleted",
+            todo: todo
+          });
+      }
+    }, (e) => {
+      res.status(404).send (e);
+    }).catch((e) => res.status(400).send());
+})
+
+app.delete('/users/:id', (req, res) => {
+  var id = req.params.id;
+  if (!ObjectID.isValid(id)) {
+    return res.status(404).send('Id format is invalid');
+  }
+  User.findByIdAndRemove(id).then((user)  => {
+      if (!user) {
+        res.status(404).send('User Record not found');
+      } else {
+          res.send ({
+            status: "Deleted",
+            user: user
+          });
+      }
+    }, (e) => {
+      res.status(404).send (e);
+    }).catch((e) => res.status(400).send());
+})
+
 app.get('/*', (req, res) => {
   res.send ({resp: "Have a nice day!"})
   //  .catch((e) => console.log (e));
+})
+
+// Update route.
+app.patch('/todos/:id', (req, res) => {
+  const id = req.params.id;
+  // We need to use lodash to parse the request body for fields to update
+  // we will ignore all other fields even if specified.
+  const body = _.pick(req.body, ['text', 'completed']); // only these are allowed
+
+  if (!ObjectID.isValid(id)) {
+    return res.status(404).send('Id format is invalid');
+  }
+
+  // before we update a record, we need to check the values passed in. We will
+  // update completed iff it is a boolean and set to true.  Otherwise we will
+  // set completed to false, and get rid of completedAt even if supplied.
+  if (_.isBoolean(body.completed) && body.completed) {
+    body.completedAt = new Date().getTime();
+  } else {
+    body.completed = false;
+    body.completedAt = null;
+  }
+
+  // Now that body has the necessary fields, we can run find and update
+  Todo.findByIdAndUpdate (id, {$set: body}, {new: true}).then((todo) => {
+    if (!todo) {
+      return res.status(404).send();
+    }
+    res.send({todo});
+  }).catch ((e) => {
+    return res.status(400).send();
+  })
 })
 
 app.listen (port, () => {
