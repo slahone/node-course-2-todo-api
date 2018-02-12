@@ -24,6 +24,12 @@ app.post('/todos', (req, res) => {
   })
 })
 
+app.get('/', (req, res) => {
+  res.send ({
+    result: "Have a nice day!"
+  }).catch (e) => res.send("Error on root");
+}
+
 app.get('/todos', (req, res) => {
     Todo.find().then ((todos) => {
       if (todos.length==0) {
