@@ -162,6 +162,7 @@ app.get('/*', (req, res) => {
 // Update route.
 app.patch('/todos/:id', (req, res) => {
   const id = req.params.id;
+  //console.log ("Patching ", id);
   // We need to use lodash to parse the request body for fields to update
   // we will ignore all other fields even if specified.
   const body = _.pick(req.body, ['text', 'completed']); // only these are allowed
