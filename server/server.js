@@ -11,6 +11,7 @@ const {ObjectID} = require ('mongodb');
 const { mongoose } = require ('./db/mongoose');
 const {Todo} = require ('./models/todo');
 const {User} = require ('./models/user');
+var {authenticate} = require ('./middleware/authenticate');
 
 const app = express();
 const port = process.env.PORT;
@@ -67,17 +68,8 @@ app.get('/users', (req, res) => {
 })
 
 // defining a private route
-app.get('/users/me', (req, res) => {
-  var token = req.header('x-auth');
-  console.log ('Token:', token);
-  User.findByToken(token).then((user) => {
-    if (!user) {
-      return Promise.reject
-    }
-    res.send(user);
-  }).catch((e) => {
-    res.status(401).send();   // 401 => not authenticated or user not found
-  })
+app.get('/users/me', authenticate, (req, res) => {
+  res.send (req.user);  // authenticate will identify the user and add it to the request object
 })
 
 
