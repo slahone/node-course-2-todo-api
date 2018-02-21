@@ -31,14 +31,13 @@ app.post('/todos', (req, res) => {
 })
 
 app.post('/users', (req, res) => {
-  const user = new User ({
-    email: req.body.email,
-  })
-  user.save().then((doc) => {
-    res.send(doc);
-  }, (e) => {
-    res.status(400).send(e);
-  })
+  const body = _.pick(req.body, ['email', 'password']);
+  const user = new User (body);
+  user.save().then(() => {
+    return user.generateAuthToken();
+  }).then((token) => {
+    res.header('x-auth', token).send(user);
+  }).catch ((e) => res.status(400).send (e));
 })
 
 app.get('/todos', (req, res) => {
@@ -66,6 +65,21 @@ app.get('/users', (req, res) => {
       res.status(400).send(e);
     });
 })
+
+// defining a private route
+app.get('/users/me', (req, res) => {
+  var token = req.header('x-auth');
+  console.log ('Token:', token);
+  User.findByToken(token).then((user) => {
+    if (!user) {
+      return Promise.reject
+    }
+    res.send(user);
+  }).catch((e) => {
+    res.status(401).send();   // 401 => not authenticated or user not found
+  })
+})
+
 
 //*****************************************************************
 // GET /todos/:id
@@ -158,6 +172,7 @@ app.delete('/users/:id', (req, res) => {
       res.status(404).send (e);
     }).catch((e) => res.status(400).send());
 })
+
 
 app.get('/*', (req, res) => {
   res.send ({resp: "Have a nice day!"})
